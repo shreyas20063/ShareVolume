@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Holdings - Shares Outstanding Analysis</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #003580;
+            --secondary-color: #0071c2;
+            --accent-color: #febb02;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --light-bg: #f8f9fa;
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem 0;
+        }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .header-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: var(--card-shadow);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .header-card h1 {
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            font-size: 2.5rem;
+        }
+
+        .header-card .subtitle {
+            color: #6c757d;
+            font-size: 1.1rem;
+        }
+
+        .data-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: var(--card-shadow);
+            padding: 2rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .stat-card.max-card {
+            border-left: 5px solid var(--success-color);
+        }
+
+        .stat-card.min-card {
+            border-left: 5px solid var(--danger-color);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            word-wrap: break-word;
+        }
+
+        .stat-fy {
+            font-size: 1.2rem;
+            color: var(--secondary-color);
+            font-weight: 600;
+        }
+
+        .stat-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.8;
+        }
+
+        .max-card .stat-icon {
+            color: var(--success-color);
+        }
+
+        .min-card .stat-icon {
+            color: var(--danger-color);
+        }
+
+        .cik-input-section {
+            background: white;
+            border-radius: 15px;
+            box-shadow: var(--card-shadow);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .cik-input-section h3 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .input-group {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .btn-primary {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--secondary-color);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .alert-custom {
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 3rem;
+            padding: 1rem;
+        }
+
+        .footer a {
+            color: var(--accent-color);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .header-card h1 {
+                font-size: 1.8rem;
+            }
+
+            .stat-value {
+                font-size: 1.8rem;
+            }
+
+            .data-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="main-container">
+        <div class="header-card">
+            <h1 id="share-entity-name">Booking Holdings</h1>
+            <p class="subtitle">Common Stock Shares Outstanding Analysis</p>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <div class="data-cards">
+            <div class="stat-card max-card">
+                <div class="text-center">
+                    <i class="fas fa-arrow-up stat-icon"></i>
+                </div>
+                <div class="stat-label">Maximum Shares Outstanding</div>
+                <div class="stat-value" id="share-max-value">-</div>
+                <div class="stat-fy">Fiscal Year: <span id="share-max-fy">-</span></div>
+            </div>
+
+            <div class="stat-card min-card">
+                <div class="text-center">
+                    <i class="fas fa-arrow-down stat-icon"></i>
+                </div>
+                <div class="stat-label">Minimum Shares Outstanding</div>
+                <div class="stat-value" id="share-min-value">-</div>
+                <div class="stat-fy">Fiscal Year: <span id="share-min-fy">-</span></div>
+            </div>
+        </div>
+
+        <div class="cik-input-section">
+            <h3 class="text-center">Query Another Company</h3>
+            <p class="text-center text-muted mb-4">Enter a 10-digit CIK to view shares outstanding data</p>
+            <div class="input-group">
+                <input type="text" 
+                       class="form-control" 
+                       id="cikInput" 
+                       placeholder="Enter CIK (e.g., 0001018724)" 
+                       pattern="[0-9]{10}"
+                       maxlength="10">
+                <button class="btn btn-primary" type="button" id="fetchBtn">
+                    <i class="fas fa-search"></i> Fetch Data
+                </button>
+            </div>
+            <p class="text-center text-muted mt-2 small">Default: Booking Holdings (CIK 0001075531)</p>
+        </div>
+
+        <div class="footer">
+            <p>Data Source: <a href="https://www.sec.gov/edgar" target="_blank">SEC EDGAR</a></p>
+            <p class="small">User-Agent: SharesOutstandingAnalyzer/1.0 (Educational Project)</p>
+        </div>
+    </div>
+
+    <script>
+        const USER_AGENT = 'SharesOutstandingAnalyzer/1.0 (Educational Project; contact@example.com)';
+        const DEFAULT_CIK = '0001075531';
+        const PROXY_URL = 'https://api.allorigins.win/raw?url=';
+
+        // Decode and save uid.txt
+        const uidData = 'OTc0NTI2MTcyMDU0MDM2NzgwNzU3MjI2NjUxNTY0ODMzMzQwMjI0MjgyMjUwMDcxODE3NzkwODMyOw==';
+        
+        function showLoading(show) {
+            document.getElementById('loadingOverlay').classList.toggle('active', show);
+        }
+
+        function showAlert(message, type = 'danger') {
+            const alertContainer = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-custom alert-dismissible fade show`;
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            alertContainer.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        function formatNumber(num) {
+            return new Intl.NumberFormat('en-US').format(num);
+        }
+
+        function updateUI(data) {
+            const entityNameElements = document.querySelectorAll('#share-entity-name');
+            entityNameElements.forEach(el => {
+                el.textContent = data.entityName;
+            });
+            
+            document.title = `${data.entityName} - Shares Outstanding Analysis`;
+            
+            document.getElementById('share-max-value').textContent = formatNumber(data.max.val);
+            document.getElementById('share-max-fy').textContent = data.max.fy;
+            document.getElementById('share-min-value').textContent = formatNumber(data.min.val);
+            document.getElementById('share-min-fy').textContent = data.min.fy;
+        }
+
+        async function fetchCompanyData(cik) {
+            showLoading(true);
+            
+            try {
+                const paddedCik = cik.padStart(10, '0');
+                const apiUrl = `https://data.sec.gov/api/xbrl/companyconcept/CIK${paddedCik}/dei/EntityCommonStockSharesOutstanding.json`;
+                
+                let response;
+                let responseData;
+                
+                try {
+                    // Try direct fetch first
+                    response = await fetch(apiUrl, {
+                        headers: {
+                            'User-Agent': USER_AGENT,
+                            'Accept': 'application/json'
+                        }
+                    });
+                    
+                    if (!response.ok) throw new Error('Direct fetch failed');
+                    responseData = await response.json();
+                } catch (directError) {
+                    // Fallback to proxy
+                    const proxyResponse = await fetch(PROXY_URL + encodeURIComponent(apiUrl));
+                    if (!proxyResponse.ok) {
+                        throw new Error(`Failed to fetch data: ${proxyResponse.status}`);
+                    }
+                    responseData = await proxyResponse.json();
+                }
+                
+                const entityName = responseData.entityName;
+                const shares = responseData.units?.shares || [];
+                
+                // Filter for fy > "2020" and numeric val
+                const filtered = shares.filter(entry => {
+                    return entry.fy && entry.fy > "2020" && 
+                           typeof entry.val === 'number' && !isNaN(entry.val);
+                });
+                
+                if (filtered.length === 0) {
+                    throw new Error('No valid data found for fiscal years after 2020');
+                }
+                
+                // Find max and min
+                let max = filtered[0];
+                let min = filtered[0];
+                
+                filtered.forEach(entry => {
+                    if (entry.val > max.val) max = entry;
+                    if (entry.val < min.val) min = entry;
+                });
+                
+                const processedData = {
+                    entityName: entityName,
+                    max: {
+                        val: max.val,
+                        fy: max.fy
+                    },
+                    min: {
+                        val: min.val,
+                        fy: min.fy
+                    }
+                };
+                
+                updateUI(processedData);
+                showAlert(`Successfully loaded data for ${entityName}`, 'success');
+                
+                return processedData;
+                
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                showAlert(`Error: ${error.message}. Please check the CIK and try again.`, 'danger');
+                throw error;
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Initialize with default or URL parameter
+        async function init() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const cikParam = urlParams.get('CIK');
+            
+            const cik = cikParam || DEFAULT_CIK;
+            
+            try {
+                await fetchCompanyData(cik);
+            } catch (error) {
+                // If URL parameter fails, try default
+                if (cikParam && cikParam !== DEFAULT_CIK) {
+                    showAlert('Failed to load requested CIK, loading default...', 'warning');
+                    await fetchCompanyData(DEFAULT_CIK);
+                }
+            }
+        }
+
+        // Event listeners
+        document.getElementById('fetchBtn').addEventListener('click', async () => {
+            const cikInput = document.getElementById('cikInput');
+            const cik = cikInput.value.trim();
+            
+            if (!cik) {
+                showAlert('Please enter a CIK', 'warning');
+                return;
+            }
+            
+            if (!/^\d{10}$/.test(cik)) {
+                showAlert('CIK must be exactly 10 digits', 'warning');
+                return;
+            }
+            
+            await fetchCompanyData(cik);
+        });
+
+        document.getElementById('cikInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('fetchBtn').click();
+            }
+        });
+
+        // Initialize on page load
+        init();
+    </script>
+</body>
+</html>
